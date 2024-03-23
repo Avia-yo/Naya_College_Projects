@@ -8,7 +8,7 @@ from matplotlib.ticker import FuncFormatter
 
 from kaggle.api.kaggle_api_extended import KaggleApi
 
-######### Get Data - by api #########
+# ######### Get Data - by api #########
 
 api = KaggleApi()
 
@@ -27,6 +27,11 @@ files = os.listdir(download_path)
 csv_file_path = os.path.join(download_path, files[0])
 imdb_df = pd.read_csv(csv_file_path)
 
+######### Get Data - by load csv file #########
+
+# csv_file_path = r"D:\Users\Avia\Git\Naya_College_Projects\IMDB_Naya_College\imdb_top_1000.csv"
+
+# imdb_df = pd.read_csv(csv_file_path)
 
 ######### Data Manipulation :  drop columns with null values,drop unnecessary columns, rename columns #########
 
