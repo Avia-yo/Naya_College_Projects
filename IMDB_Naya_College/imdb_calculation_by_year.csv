@@ -1,5 +1,5 @@
 No_of_Votes,No_of_Votes,No_of_Votes,No_of_Votes,No_of_Votes
-sum,min,max,mean,count
+sum_no_of_votes,the_min_votes_for_movie,the_max_votes_for_movie,the_mean_votes_for_movie,no_of_rate_movies_this_year
 57428,57428,57428,57428.0,1
 113314,113314,113314,113314.0,1
 88794,88794,88794,88794.0,1

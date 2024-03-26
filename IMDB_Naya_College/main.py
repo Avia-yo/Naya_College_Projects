@@ -5,7 +5,7 @@ import json
 
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter
-
+from utils import utils
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 # ######### Get Data - by api #########
@@ -35,48 +35,48 @@ imdb_df = pd.read_csv(csv_file_path)
 
 ######### Data Manipulation :  drop columns with null values,drop unnecessary columns, rename columns #########
 
-#### Data Cleaning :  drop columns with null values,drop unnecessary columns, rename columns ###
+#### Data Cleaning :  drop columns with null values & unnecessary columns, rename columns ###
 imdb_df.columns
 
-imdb_df.isnull().sum()
+null_values = imdb_df.isnull().sum(axis=1)
+rows_with_null = null_values[null_values > 0]
+sum_of_rows_with_null = rows_with_null.sum()
+print("Number of null rows:", sum_of_rows_with_null)
 
-# drop columns
-imdb_df.drop(columns=["Meta_score","Certificate","Gross"],inplace=True)
-imdb_df.drop(columns=['Poster_Link','Overview','Star3','Star4'],inplace = True)
+duplicates_value = imdb_df.duplicated().sum()
+print("Number of duplicate rows:", duplicates_value)
+
+# drop columns & rename column
+imdb_df.drop(columns=['Meta_score','Certificate','Gross','Poster_Link','Overview','Star3','Star4'],inplace=True)
 
 imdb_df.rename(columns={'Runtime': 'Runtime_Minutes'}, inplace=True)
 
 
 #### Data calculation ###
 
-# create functions
+utl = utils()
 
-calculation_by_year= imdb_df.groupby(by="Released_Year").agg({'No_of_Votes': ['sum','min','max','mean','count']})
-calculation_by_year_top_15= calculation_by_year.sort_values(by=('No_of_Votes', 'sum'), ascending=False).head(15)
+calculations_by_year = utl.get_calculation(imdb_df, "Released_Year", "No_of_Votes")
+calculations_by_year = calculations_by_year.rename(columns={
+    'count': 'no_of_rate_movies_this_year',
+    'sum': 'sum_no_of_votes',
+    'min': 'the_min_votes_for_movie',
+    'max': 'the_max_votes_for_movie',
+    'mean': 'the_mean_votes_for_movie'
+})                                               
+
+df_top_15_No_of_Votes_per_year = utl.get_sort_and_pick_top(calculations_by_year, ('No_of_Votes', 'sum_no_of_votes'), False, 15)
+
+df_mean_IMDB_Rating_per_Genre = utl.get_mean(imdb_df, "Genre", "IMDB_Rating").to_frame().reset_index()
+
+df_top_10_IMDB_Rating_per_Genre = utl.get_sort_and_pick_top(df_mean_IMDB_Rating_per_Genre, "IMDB_Rating", False, 10)
+
+df_top_10_movies=  utl.get_sort_and_pick_top(imdb_df, "IMDB_Rating", False, 10)
 
 
-def calculate_mean_IMDB_Rating_by_Genre(df):
-    # Group the DataFrame by 'Genre' and calculate the average rating vote for each genre
-    avg_IMDB_Rating_by_Genre = imdb_df.groupby('Genre')['IMDB_Rating'].mean().round(2)
-    
-    return avg_IMDB_Rating_by_Genre
-
-
-df_mean_IMDB_Rating_per_Genre = calculate_mean_IMDB_Rating_by_Genre(imdb_df)
-
-df_mean_IMDB_Rating_per_Genre = df_mean_IMDB_Rating_per_Genre.to_frame().reset_index()
-df_top_10_IMDB_Rating_per_Genre = df_mean_IMDB_Rating_per_Genre.sort_values(by="IMDB_Rating", ascending=False).head(10)
-
-
-
-df_top_10_movies= imdb_df.sort_values(by="IMDB_Rating", ascending=False).head(10)
-
+print(df_top_15_No_of_Votes_per_year)
 print(df_top_10_IMDB_Rating_per_Genre)
 print(df_top_10_movies)
-print(calculation_by_year_top_15)
-
-
-
 
 ######### Visualization #########
 # 1 - Creating a scatter plot 
@@ -97,7 +97,7 @@ fig1.set_size_inches((10, 6))
 
 # 2 - Creating a bar plot
 _, ax2 = plt.subplots()
-calculation_by_year_top_15[('No_of_Votes', 'sum')].plot(ax=ax2, kind='bar', figsize=(10, 6))
+df_top_15_No_of_Votes_per_year[('No_of_Votes', 'sum_no_of_votes')].plot(ax=ax2, kind='bar', figsize=(10, 6))
 
 ax2.set_xlabel('Released_Year')
 ax2.set_ylabel('Sum of No_of_Votes')
@@ -110,7 +110,7 @@ ax2.tick_params(axis='x', rotation=45)
 #csv
 imdb_df.to_csv('imdb_df_clean.csv', index=False)
 
-calculation_by_year.to_csv('imdb_calculation_by_year.csv', index=False)
+calculations_by_year.to_csv('imdb_calculation_by_year.csv', index=False)
 
 #json
 with open('top_10_movies.json', 'w') as json_file:
