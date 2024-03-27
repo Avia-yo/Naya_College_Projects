@@ -52,7 +52,7 @@ imdb_df.drop(columns=['Meta_score','Certificate','Gross','Poster_Link','Overview
 imdb_df.rename(columns={'Runtime': 'Runtime_Minutes'}, inplace=True)
 
 
-#### Data calculation ###
+#### Data calculations ###
 
 utl = utils()
 
